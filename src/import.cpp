@@ -162,54 +162,53 @@ void Import::fetch()
 }
 
 bool Import::read(MemoryDownload *dl, const size_t idx)
-{
+try {
   char msg[1024];
 
-  try {
-    // TODO: remove this mess
-    RemotePtr fakeRemote = make_shared<Remote>("temp");
-    Index fakeIndex(fakeRemote);
-    const string &name = fakeIndex.load(dl->contents().c_str());
+  // TODO: remove this mess
+  RemotePtr fakeRemote = make_shared<Remote>("temp");
+  Index fakeIndex(fakeRemote);
+  const string &name = fakeIndex.load(dl->contents().c_str());
 
-    RemotePtr remote = g_reapack->config()->remotes.getByName(name);
+  RemotePtr remote = g_reapack->config()->remotes.getByName(name);
 
-    if(!remote)
-      remote = make_shared<Remote>(name, dl->url());
+  if(!remote)
+    remote = make_shared<Remote>(name, dl->url());
 
-    remote->setEnabled(true);
+  remote->setEnabled(true);
 
-    if(remote->url() != dl->url()) {
-      if(remote->test(Remote::ProtectedFlag)) {
-        snprintf(msg, sizeof(msg),
-          "The repository %s is protected and cannot be overwritten.",
-          remote->name().c_str());
-        Win32::messageBox(handle(), msg, TITLE, MB_OK);
+  if(remote->url() != dl->url()) {
+    if(remote->test(Remote::ProtectedFlag)) {
+      snprintf(msg, sizeof(msg),
+        "The repository %s is protected and cannot be overwritten.",
+        remote->name().c_str());
+      Win32::messageBox(handle(), msg, TITLE, MB_OK);
+      return true;
+    }
+    else {
+      snprintf(msg, sizeof(msg),
+        "%s is already configured with a different URL.\n"
+        "Do you want to overwrite it?", remote->name().c_str());
+
+      const auto answer = Win32::messageBox(handle(), msg, TITLE, MB_YESNO);
+
+      if(answer != IDYES)
         return true;
-      }
-      else {
-        snprintf(msg, sizeof(msg),
-          "%s is already configured with a different URL.\n"
-          "Do you want to overwrite it?", remote->name().c_str());
-
-        const auto answer = Win32::messageBox(handle(), msg, TITLE, MB_YESNO);
-
-        if(answer != IDYES)
-          return true;
-      }
-
-      remote->setUrl(dl->url());
     }
 
-    m_queue.push_back({idx, remote, dl->contents()});
+    remote->setUrl(dl->url());
+  }
 
-    return true;
-  }
-  catch(const reapack_error &e) {
-    snprintf(msg, sizeof(msg), "The received file is invalid: %s\n%s",
-      e.what(), dl->url().c_str());
-    Win32::messageBox(handle(), msg, TITLE, MB_OK);
-    return false;
-  }
+  m_queue.push_back({idx, remote, dl->contents()});
+
+  return true;
+}
+catch(const reapack_error &e) {
+  char msg[1024];
+  snprintf(msg, sizeof(msg), "The received file is invalid: %s\n%s",
+    e.what(), dl->url().c_str());
+  Win32::messageBox(handle(), msg, TITLE, MB_OK);
+  return false;
 }
 
 void Import::processQueue()
