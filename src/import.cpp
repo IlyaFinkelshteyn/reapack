@@ -175,8 +175,6 @@ try {
   if(!remote)
     remote = make_shared<Remote>(name, dl->url());
 
-  remote->setEnabled(true);
-
   if(remote->url() != dl->url()) {
     if(remote->test(Remote::ProtectedFlag)) {
       snprintf(msg, sizeof(msg),
@@ -199,6 +197,7 @@ try {
     remote->setUrl(dl->url());
   }
 
+  remote->setEnabled(true);
   m_queue.push_back({idx, remote, dl->contents()});
 
   return true;
