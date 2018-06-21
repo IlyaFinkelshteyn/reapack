@@ -60,7 +60,6 @@ public:
   void refreshBrowser();
 
   Transaction *setupTransaction();
-  Transaction *transaction() const { return m_tx; }
   void commitConfig(bool refresh = true);
   Config *config() { return &m_config; }
 

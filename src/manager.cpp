@@ -604,7 +604,7 @@ bool Manager::apply()
     if(*m_autoInstall) {
       for(const RemotePtr &r : g_reapack->config()->remotes.getEnabled()) {
         if(!isUninstalled(r))
-          tx->synchronize(r);
+          r->setDirty();
       }
     }
   }
@@ -626,8 +626,6 @@ bool Manager::apply()
 
     if(mods.autoInstall)
       mods.remote->setAutoInstall(*mods.autoInstall);
-
-    mods.remote->autoSync();
   }
 
   reset();
