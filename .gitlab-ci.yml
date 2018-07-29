@@ -1,0 +1,43 @@
+---
+image: archlinux/base
+variables:
+  CURLSO: ':libcurl.so.3'
+
+build:x64:
+  stage: build
+  before_script:
+    - pacman -Sy --noconfirm boost catch2 gcc git libcurl-compat php tup wget
+
+    - &reaper_plugin
+      wget -nv https://github.com/reaper-oss/sws/raw/master/reaper/reaper_plugin.h -P vendor
+    - &reaper_plugin_functions
+      wget -nv https://gist.github.com/cfillion/da355e8278048de08ae065d6fe6031c1/raw/reaper_plugin_functions.h -P vendor
+    - &wdl git clone -q --depth 1 https://github.com/justinfrankel/WDL.git vendor/WDL
+  script: tup x64
+  artifacts:
+    paths:
+      - x64/bin
+test:x64:
+  stage: test
+  script: x64/bin/test
+  dependencies:
+    - build:x64
+
+build:x86:
+  stage: build
+  before_script:
+    - echo $'[multilib]\nInclude = /etc/pacman.d/mirrorlist' >> /etc/pacman.conf
+    - pacman -Sy --noconfirm boost catch2 gcc git lib32-libcurl-compat lib32-gcc-libs lib32-sqlite php tup wget
+
+    - *reaper_plugin
+    - *reaper_plugin_functions
+    - *wdl
+  script: tup x86
+  artifacts:
+    paths:
+      - x86/bin
+test:x86:
+  stage: test
+  script: x86/bin/test
+  dependencies:
+    - build:x86
