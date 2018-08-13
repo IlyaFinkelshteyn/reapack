@@ -506,10 +506,9 @@ void Manager::importArchive()
     Archive::import(path);
   }
   catch(const reapack_error &e) {
-    char msg[512];
-    snprintf(msg, sizeof(msg), "An error occured while reading %s.\n\n%s.",
-      path.c_str(), e.what());
-    Win32::messageBox(handle(), msg, title, MB_OK);
+    Win32::messageBox(handle(), String::format(
+      "An error occured while reading %s.\n\n%s.", path.c_str(), e.what()
+    ).c_str(), title, MB_OK);
   }
 }
 
@@ -580,12 +579,11 @@ bool Manager::confirm() const
   if(!uninstallCount)
     return true;
 
-  char msg[255];
-  snprintf(msg, sizeof(msg), "Uninstall %zu %s?\n"
+  return IDYES == Win32::messageBox(handle(), String::format(
+    "Uninstall %zu %s?\n"
     "Every file they contain will be removed from your computer.",
-    uninstallCount, uninstallCount == 1 ? "repository" : "repositories");
-
-  return IDYES == Win32::messageBox(handle(), msg, "ReaPack Query", MB_YESNO);
+    uninstallCount, uninstallCount == 1 ? "repository" : "repositories"
+  ).c_str(), "ReaPack Query", MB_YESNO);
 }
 
 bool Manager::apply()

@@ -92,18 +92,13 @@ void Progress::updateProgress()
   String::imbueStream(position);
   position << min(m_done + 1, m_total) << " of " << m_total;
 
-  char label[1024];
-  snprintf(label, sizeof(label), m_current.c_str(), position.str().c_str());
-
-  Win32::setWindowText(m_label, label);
+  Win32::setWindowText(m_label, String::format(m_current.c_str(), position.str().c_str()).c_str());
 
   const double pos = (double)(min(m_done+1, m_total)) / max(2, m_total);
   const int percent = (int)(pos * 100);
 
-  char title[255];
-  snprintf(title, sizeof(title),
-    "ReaPack: Operation in progress (%d%%)", percent);
-
   SendMessage(m_progress, PBM_SETPOS, percent, 0);
-  Win32::setWindowText(handle(), title);
+  Win32::setWindowText(handle(), String::format(
+    "ReaPack: Operation in progress (%d%%)", percent
+  ).c_str());
 }
