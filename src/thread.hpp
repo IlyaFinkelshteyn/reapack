@@ -19,6 +19,7 @@
 #define REAPACK_THREAD_HPP
 
 #include "errors.hpp"
+#include "event.hpp"
 
 #include <array>
 #include <atomic>
@@ -30,7 +31,7 @@
 
 #include <boost/signals2.hpp>
 
-class ThreadTask {
+class ThreadTask : public EventEmitter {
 public:
   enum State {
     Idle,
@@ -51,7 +52,6 @@ public:
   void start(); // start a new thread
   void exec();  // runs in the current thread
   const std::string &summary() const { return m_summary; }
-  void setState(State);
   State state() const { return m_state; }
   void setError(const ErrorInfo &err) { m_error = err; }
   const ErrorInfo &error() { return m_error; }
@@ -64,6 +64,7 @@ public:
 
 protected:
   virtual bool run() = 0;
+  void eventHandler(Event) override;
 
   void setSummary(const std::string &s) { m_summary = s; }
 
@@ -121,32 +122,6 @@ private:
   TaskSignal m_onPush;
   VoidSignal m_onAbort;
   VoidSignal m_onDone;
-};
-
-// This singleton class receives state change notifications from a
-// worker thread and applies them in the main thread
-class ThreadNotifier {
-  typedef std::pair<ThreadTask *, ThreadTask::State> Notification;
-
-public:
-  static ThreadNotifier *get();
-
-  void start();
-  void stop();
-
-  void notify(const Notification &);
-
-private:
-  static ThreadNotifier *s_instance;
-  static void tick();
-
-  ThreadNotifier() : m_active(0) {}
-  ~ThreadNotifier() = default;
-  void processQueue();
-
-  std::mutex m_mutex;
-  size_t m_active;
-  std::queue<Notification> m_queue;
 };
 
 #endif
