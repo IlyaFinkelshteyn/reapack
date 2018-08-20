@@ -22,7 +22,7 @@ TEST_CASE("multiple EventEmitter registers a single timer", M) {
   REQUIRE(registered == std::vector<std::string>{"timer", "-timer"});
 }
 
-TEST_CASE("EventEmitter calls eventHandler from timer", M) {
+TEST_CASE("EventEmitter calls eventHandler from timer and in order", M) {
   static void (*tick)() = nullptr;
   plugin_register = [](const char *, void *c) { tick = (void(*)())c; return 0; };
 
@@ -31,10 +31,12 @@ TEST_CASE("EventEmitter calls eventHandler from timer", M) {
     std::vector<Event> bucket;
   } e;
 
-  e.emit(42);
+  e.emit(1);
+  e.emit(2);
+  e.emit(3);
   CHECK(e.bucket.empty());
   tick();
-  REQUIRE(e.bucket == std::vector<Event>{42});
+  REQUIRE(e.bucket == std::vector<Event>{1, 2, 3});
 }
 
 TEST_CASE("events from deleted EventEmmiter are discarded", M) {
