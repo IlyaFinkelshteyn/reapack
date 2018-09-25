@@ -36,6 +36,9 @@ before_test:
 test_script: 
   - '$PLATFORM/bin/test'
   - sudo apt-get install dotnet-sdk-2.1 -qq
+  - sudo apt-get install dotnet-hosting-2.0.7 -qq
+  
 artifacts:
   - path: $(PLATFORM)/bin/reaper_reapack*.so
   - path: $(PLATFORM)/bin/test 
+  
