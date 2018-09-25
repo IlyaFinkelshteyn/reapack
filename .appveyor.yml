@@ -1,8 +1,7 @@
----
-version: "{build}-{branch}"
 image:
-  - &linux   Ubuntu1804
-  - &windows Visual Studio 2017
+- Ubuntu1804
+- Ubuntu1604
+
 platform:
   - x64
   - x86
@@ -10,58 +9,26 @@ before_build:
   - curl -fsSL https://github.com/reaper-oss/sws/raw/master/reaper/reaper_plugin.h -o vendor/reaper_plugin.h
   - curl -fsSL https://gist.github.com/cfillion/da355e8278048de08ae065d6fe6031c1/raw/reaper_plugin_functions.h -o vendor/reaper_plugin_functions.h
   - git clone -q --depth 1 https://github.com/justinfrankel/WDL.git vendor/WDL
-for:
-  - matrix: { only: [ image: *linux ] }
-    install:
-      - docker run --name arch --rm --privileged -tidv `pwd`:/build -w /build
-        -e CURLSO=:libcurl.so.3 archlinux/base
-      - docker exec arch
-        pacman -Syu --noconfirm boost catch2 gcc git libcurl-compat php tup wget
 
-      - if [[ "$PLATFORM" == "x86" ]]; then
-          docker exec arch sh -c $'
-            echo "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf' &&
-          docker exec arch
-            pacman -Sy --noconfirm lib32-libcurl-compat lib32-gcc-libs lib32-sqlite;
-        fi
-    # HACK: tup needs a parent process to do setpgid successfully
-    build_script: docker exec arch sh -c "echo tup $PLATFORM | sh"
-    before_test:
-      - if [[ "$PLATFORM" == "x86" ]]; then
-          sudo apt-get install libcurl3:i386 -qq;
-        fi
-    test_script: '$PLATFORM/bin/test'
-    artifacts:
-      - path: $(PLATFORM)/bin/reaper_reapack*.so
-      - path: $(PLATFORM)/bin/test
+install:
+  - docker run --name arch --rm --privileged -tidv `pwd`:/build -w /build
+    -e CURLSO=:libcurl.so.3 archlinux/base
+  - docker exec arch
+   pacman -Syu --noconfirm boost catch2 gcc git libcurl-compat php tup wget
 
-  - matrix: { only: [ image: *windows ] }
-    cache:
-      - C:\Tools\vcpkg\installed\
-    install:
-      - curl -fsSL http://gittup.org/tup/win32/tup-explicit-variant-v0.7.3-45-gcf6a829.zip -o C:\Tools\tup.zip
-      - 7z x C:\Tools\tup.zip -oC:\Tools\tup > NUL
-      - set PATH=C:\Tools\tup;%PATH%
-
-      - mklink /J vendor\vcpkg C:\Tools\vcpkg > NUL
-      - git -C vendor\vcpkg pull
-      - git apply --directory=vendor vendor\0001-vcpkg-curl-use-winssl.patch
-      - vcpkg upgrade --no-dry-run
-      - set /p vcpkg-deps=<vendor\vcpkg-deps.txt
-      - vcpkg install --triplet %PLATFORM%-windows-static %vcpkg-deps%
-    build_script: tup %PLATFORM%
-    test_script: '%PLATFORM%\bin\test'
-    artifacts:
-      - path: $(PLATFORM)\bin\reaper_reapack*.dll
-      - path: $(PLATFORM)\bin\reaper_reapack*.pdb
-      - path: $(PLATFORM)\bin\test.exe
-deploy:
-  provider: GitHub
-  draft: true
-  description: ''
-  force_update: true
-  auth_token:
-    secure: S4kQ8Fky507O9XHtcXdQ/Gv1+EB/6iiJQwd/InbZsl5pUdCX0oPWuP9N1B8t5fbl
-  artifact: /.*\.(dll|so)/
-  on:
-    APPVEYOR_REPO_TAG: true
+  - if [[ "$PLATFORM" == "x86" ]]; then
+      docker exec arch sh -c $'
+        echo "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf' &&
+      docker exec arch
+        pacman -Sy --noconfirm lib32-libcurl-compat lib32-gcc-libs lib32-sqlite;
+    fi
+# HACK: tup needs a parent process to do setpgid successfully
+build_script: docker exec arch sh -c "echo tup $PLATFORM | sh"
+before_test:
+  - if [[ "$PLATFORM" == "x86" ]]; then
+      sudo apt-get install libcurl3:i386 -qq;
+    fi
+test_script: '$PLATFORM/bin/test'
+artifacts:
+  - path: $(PLATFORM)/bin/reaper_reapack*.so
+  - path: $(PLATFORM)/bin/test 
