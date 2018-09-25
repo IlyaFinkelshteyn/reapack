@@ -1,10 +1,11 @@
 image:
-- Ubuntu1804
 - Ubuntu1604
+- Ubuntu1804
 
 platform:
-  - x64
   - x86
+  - x64
+
 before_build:
   - curl -fsSL https://github.com/reaper-oss/sws/raw/master/reaper/reaper_plugin.h -o vendor/reaper_plugin.h
   - curl -fsSL https://gist.github.com/cfillion/da355e8278048de08ae065d6fe6031c1/raw/reaper_plugin_functions.h -o vendor/reaper_plugin_functions.h
