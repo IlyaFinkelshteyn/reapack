@@ -35,7 +35,7 @@ before_test:
     fi
 test_script: 
   - '$PLATFORM/bin/test'
-  - sudo apt-get install dotnet-sdk-2.1
+  - sudo apt-get install dotnet-sdk-2.1 -qq
 artifacts:
   - path: $(PLATFORM)/bin/reaper_reapack*.so
   - path: $(PLATFORM)/bin/test 
