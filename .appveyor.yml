@@ -33,7 +33,9 @@ before_test:
   - if [[ "$PLATFORM" == "x86" ]]; then
       sudo apt-get install libcurl3:i386 -qq;
     fi
-test_script: '$PLATFORM/bin/test'
+test_script: 
+  - '$PLATFORM/bin/test'
+  - sudo apt-get install dotnet-sdk-2.1
 artifacts:
   - path: $(PLATFORM)/bin/reaper_reapack*.so
   - path: $(PLATFORM)/bin/test 
